@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "endpoint": "https://api.sitecommand.io/v1/events",
+  "webhook": "https://api.sitecommand.io/v1/integrations/github/webhook",
+  "sites": [
+    {
+      "id": "nfinitdevelopment",
+      "name": "N-FINIT DEVELOPMENT",
+      "domain": "nfinitdevelopment.com",
+      "url": "https://nfinitdevelopment.com",
+      "siteKey": "sc_live_nfinit_nfinitdevelopment_com",
+      "platform": "static_html",
+      "hosting": "github_pages",
+      "ga4PropertyId": "G-7HYNQ4WFMR",
+      "pages": ["index.html", "products.html"],
+      "adminUrl": "https://github.com/onemoresn/NFINITDevelopment",
+      "dnsVerification": {
+        "record": "TXT",
+        "host": "_sitecommand.nfinitdevelopment.com",
+        "value": "sitecommand-verify-nfinit"
+      }
+    },
+    {
+      "id": "givemetech",
+      "name": "GiveMeTech",
+      "domain": "give-me-tech.com",
+      "url": "https://give-me-tech.com",
+      "siteKey": "sc_live_gmt_give_me_tech_com",
+      "platform": "react_vite",
+      "hosting": "github_pages",
+      "ga4PropertyId": "G-7HYNQ4WFMR",
+      "githubRepo": "onemoresn/GiveMeTech",
+      "adminUrl": "https://github.com/onemoresn/GiveMeTech",
+      "workflows": ["deploy-pages.yml", "update-feed.yml"],
+      "dnsVerification": {
+        "record": "TXT",
+        "host": "_sitecommand.give-me-tech.com",
+        "value": "sitecommand-verify-gmt"
+      }
+    }
+  ],
+  "alerts": {
+    "defaultEmail": null,
+    "rules": [
+      { "type": "downtime", "threshold": { "minutes": 1 }, "channels": ["email"] },
+      { "type": "ssl_expiry", "threshold": { "days": 30 }, "channels": ["email"] },
+      { "type": "traffic_anomaly", "threshold": { "percentChange": 50 }, "channels": ["email"] }
+    ]
+  }
+}
