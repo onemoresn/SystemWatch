@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "endpoint": "https://api.sitecommand.io/v1/events",
-  "webhook": "https://api.sitecommand.io/v1/integrations/github/webhook",
+  "endpoint": "https://systemwatch.onrender.com/v1/events",
+  "webhook": "https://systemwatch.onrender.com/v1/integrations/github/webhook",
   "sites": [
     {
       "id": "nfinitdevelopment",
