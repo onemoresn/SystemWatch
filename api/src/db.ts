@@ -1,8 +1,9 @@
 import Database from 'better-sqlite3'
 import path from 'node:path'
 import fs from 'node:fs'
+import { resolveProjectPath } from './paths.js'
 
-const dataDir = path.join(process.cwd(), 'data')
+const dataDir = path.join(resolveProjectPath('api', 'data'))
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true })
 
 const dbPath = process.env.DATABASE_PATH ?? path.join(dataDir, 'sitecommand.db')

@@ -1,8 +1,9 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { db } from './db.js'
+import { resolveProjectPath } from './paths.js'
 
-const registryPath = path.join(process.cwd(), '..', 'sites', 'registry.json')
+const registryPath = resolveProjectPath('sites', 'registry.json')
 const registry = JSON.parse(fs.readFileSync(registryPath, 'utf-8'))
 
 const insert = db.prepare(`

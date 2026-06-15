@@ -1,12 +1,12 @@
 import fs from 'node:fs'
-import path from 'node:path'
+import { resolveProjectPath } from './paths.js'
 import { db, getAllSites } from './db.js'
 
 export function seedIfEmpty() {
   const count = (db.prepare('SELECT COUNT(*) as c FROM sites').get() as { c: number }).c
   if (count > 0) return
 
-  const registryPath = path.join(process.cwd(), '..', 'sites', 'registry.json')
+  const registryPath = resolveProjectPath('sites', 'registry.json')
   if (!fs.existsSync(registryPath)) {
     console.warn('No registry.json found; skipping seed.')
     return

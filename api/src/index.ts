@@ -6,6 +6,7 @@ import { registerEventRoutes } from './routes/events.js'
 import { runAllMonitors } from './workers/monitors.js'
 import { verifyDnsRecords } from './workers/dns.js'
 import { seedIfEmpty } from './bootstrap.js'
+import { resolveProjectPath } from './paths.js'
 
 const PORT = Number(process.env.PORT ?? 3001)
 const HOST = process.env.HOST ?? '0.0.0.0'
@@ -19,7 +20,7 @@ async function main() {
 
   await registerEventRoutes(app)
 
-  const beaconPath = path.join(process.cwd(), '..', 'beacon', 'sitecommand-beacon.js')
+  const beaconPath = resolveProjectPath('beacon', 'sitecommand-beacon.js')
   app.get('/beacon.js', async (_req, reply) => {
     const js = fs.readFileSync(beaconPath, 'utf-8')
     return reply.type('application/javascript').send(js)
