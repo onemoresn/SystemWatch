@@ -40,8 +40,33 @@ export async function fetchOverview(): Promise<Overview> {
 
 export { API_BASE }
 
+export interface CloudStatus {
+  enabled: boolean
+  cloudUrl: string | null
+  connected: boolean
+  localEvents24h: number
+  cloudEvents24h: number
+  pendingPush: number
+  lastSyncAt: string | null
+  lastSyncSummary: { pushed?: number; cloudEvents24h?: number } | null
+  lastError: string | null
+}
+
+export async function fetchCloudStatus(): Promise<CloudStatus> {
+  const res = await fetch(`${API_BASE}/v1/cloud/status`)
+  if (!res.ok) throw new Error('Failed to load cloud status')
+  return res.json()
+}
+
 export async function runHealthCheck(id: string) {
   const res = await fetch(`${API_BASE}/v1/websites/${id}/health-check`, { method: 'POST' })
   if (!res.ok) throw new Error('Health check failed')
   return res.json()
+}
+
+export async function runCloudSync() {
+  const res = await fetch(`${API_BASE}/v1/cloud/sync`, { method: 'POST' })
+  const data = await res.json()
+  if (!res.ok || !data.ok) throw new Error(data.error ?? 'Cloud sync failed')
+  return data
 }

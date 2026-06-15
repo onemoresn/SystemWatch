@@ -20,6 +20,7 @@
       "output": "../release",
       "buildResources": "assets"
     },
+    "icon": "assets/icon.png",
     "files": ["main.js"],
     "extraResources": [
       { "from": "../dist-bundle/sitecommand", "to": "sitecommand" },

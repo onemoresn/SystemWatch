@@ -37,6 +37,7 @@ db.exec(`
     referrer TEXT,
     payload TEXT,
     ts INTEGER NOT NULL,
+    cloud_synced INTEGER NOT NULL DEFAULT 0,
     received_at TEXT NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY (site_id) REFERENCES sites(id)
   );
@@ -73,7 +74,19 @@ db.exec(`
 
   CREATE INDEX IF NOT EXISTS idx_events_site_ts ON events(site_id, ts);
   CREATE INDEX IF NOT EXISTS idx_uptime_site ON uptime_checks(site_id, checked_at);
+
+  CREATE TABLE IF NOT EXISTS sync_meta (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
 `)
+
+try {
+  db.exec('ALTER TABLE events ADD COLUMN cloud_synced INTEGER NOT NULL DEFAULT 0')
+} catch {
+  /* column exists */
+}
 
 export interface SiteRow {
   id: string

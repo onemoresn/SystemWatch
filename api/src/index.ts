@@ -4,14 +4,17 @@ import fastifyStatic from '@fastify/static'
 import fs from 'node:fs'
 import path from 'node:path'
 import { registerEventRoutes } from './routes/events.js'
+import { registerCloudRoutes } from './routes/cloud.js'
 import { runAllMonitors } from './workers/monitors.js'
 import { verifyDnsRecords } from './workers/dns.js'
+import { runCloudSyncIfEnabled } from './workers/cloud-sync.js'
 import { seedIfEmpty } from './bootstrap.js'
 import { resolveProjectPath } from './paths.js'
 
 const PORT = Number(process.env.PORT ?? 3001)
 const HOST = process.env.HOST ?? '0.0.0.0'
 const MONITOR_INTERVAL_MS = Number(process.env.MONITOR_INTERVAL_MS ?? 60000)
+const CLOUD_SYNC_INTERVAL_MS = Number(process.env.CLOUD_SYNC_INTERVAL_MS ?? 300000)
 
 async function main() {
   seedIfEmpty()
@@ -20,6 +23,7 @@ async function main() {
   await app.register(cors, { origin: true })
 
   await registerEventRoutes(app)
+  await registerCloudRoutes(app)
 
   const beaconPath = resolveProjectPath('beacon', 'sitecommand-beacon.js')
   app.get('/beacon.js', async (_req, reply) => {
@@ -49,6 +53,13 @@ async function main() {
     runAllMonitors().catch((err) => console.error('Monitor error:', err))
     verifyDnsRecords().catch((err) => console.error('DNS verify error:', err))
   }, MONITOR_INTERVAL_MS)
+
+  if (process.env.CLOUD_API_URL) {
+    runCloudSyncIfEnabled().catch((err) => console.error('Cloud sync error:', err))
+    setInterval(() => {
+      runCloudSyncIfEnabled().catch((err) => console.error('Cloud sync error:', err))
+    }, CLOUD_SYNC_INTERVAL_MS)
+  }
 }
 
 main().catch((err) => {

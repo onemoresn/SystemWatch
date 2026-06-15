@@ -60,6 +60,7 @@ function startApi() {
       PORT: String(PORT),
       HOST: '127.0.0.1',
       NODE_ENV: 'production',
+      CLOUD_API_URL: process.env.CLOUD_API_URL || 'https://systemwatch.onrender.com',
     },
     windowsHide: true,
   })

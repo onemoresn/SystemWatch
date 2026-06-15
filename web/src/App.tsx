@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { fetchOverview, runHealthCheck, API_BASE, type Overview, SiteStatus } from './api'
+import { fetchOverview, runHealthCheck, fetchCloudStatus, runCloudSync, API_BASE, type Overview, type CloudStatus, SiteStatus } from './api'
 
 function StatusDot({ status }: { status: string }) {
   const color = status === 'online' ? 'var(--green)' : 'var(--red)'
@@ -151,15 +151,90 @@ function SiteCard({
   )
 }
 
+function CloudSyncPanel({
+  cloud,
+  syncing,
+  onSync,
+}: {
+  cloud: CloudStatus | null
+  syncing: boolean
+  onSync: () => void
+}) {
+  if (!cloud?.enabled) return null
+
+  const statusColor = cloud.connected ? 'var(--green)' : 'var(--red)'
+  const statusLabel = cloud.connected ? 'Connected' : 'Unreachable'
+
+  return (
+    <section
+      style={{
+        background: 'var(--card)',
+        border: '1px solid var(--border)',
+        borderRadius: 12,
+        padding: '1rem 1.25rem',
+        marginBottom: '1.5rem',
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '1rem',
+      }}
+    >
+      <div>
+        <div style={{ fontWeight: 700, marginBottom: '0.35rem' }}>Cloud sync</div>
+        <div style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
+          <span style={{ color: statusColor, fontWeight: 600 }}>{statusLabel}</span>
+          {' · '}
+          {cloud.cloudUrl?.replace(/^https?:\/\//, '')}
+        </div>
+        <div style={{ fontSize: '0.8rem', color: 'var(--muted)', marginTop: '0.35rem' }}>
+          Local events (24h): {cloud.localEvents24h} · Cloud: {cloud.cloudEvents24h}
+          {cloud.pendingPush > 0 ? ` · ${cloud.pendingPush} pending push` : ''}
+          {cloud.lastSyncAt ? ` · Last sync: ${new Date(cloud.lastSyncAt).toLocaleString()}` : ''}
+        </div>
+        {cloud.lastError && (
+          <div style={{ fontSize: '0.8rem', color: 'var(--red)', marginTop: '0.35rem' }}>
+            {cloud.lastError}
+          </div>
+        )}
+      </div>
+      <button
+        type="button"
+        disabled={syncing || !cloud.connected}
+        onClick={onSync}
+        style={{
+          padding: '0.5rem 1rem',
+          borderRadius: 8,
+          border: 'none',
+          background: 'var(--accent)',
+          color: '#fff',
+          fontWeight: 600,
+          fontSize: '0.85rem',
+          opacity: syncing || !cloud.connected ? 0.6 : 1,
+        }}
+      >
+        {syncing ? 'Syncing…' : 'Sync now'}
+      </button>
+    </section>
+  )
+}
+
 export default function App() {
   const [data, setData] = useState<Overview | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
   const [checking, setChecking] = useState<string | null>(null)
+  const [cloud, setCloud] = useState<CloudStatus | null>(null)
+  const [syncing, setSyncing] = useState(false)
 
   const load = useCallback(async () => {
     try {
       setData(await fetchOverview())
+      try {
+        setCloud(await fetchCloudStatus())
+      } catch {
+        setCloud(null)
+      }
       setError(null)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error')
@@ -183,6 +258,18 @@ export default function App() {
       await load()
     } finally {
       setChecking(null)
+    }
+  }
+
+  const handleCloudSync = async () => {
+    setSyncing(true)
+    try {
+      await runCloudSync()
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Cloud sync failed')
+    } finally {
+      setSyncing(false)
     }
   }
 
@@ -260,6 +347,8 @@ export default function App() {
                 </div>
               ))}
             </div>
+
+            <CloudSyncPanel cloud={cloud} syncing={syncing} onSync={handleCloudSync} />
 
             <div
               style={{
