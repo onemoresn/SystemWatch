@@ -3,10 +3,10 @@ import path from 'node:path'
 import fs from 'node:fs'
 import { resolveProjectPath } from './paths.js'
 
-const dataDir = path.join(resolveProjectPath('api', 'data'))
-if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true })
-
-const dbPath = process.env.DATABASE_PATH ?? path.join(dataDir, 'sitecommand.db')
+const dbPath =
+  process.env.DATABASE_PATH ?? path.join(resolveProjectPath('api', 'data'), 'sitecommand.db')
+const dbDir = path.dirname(dbPath)
+if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true })
 export const db = new Database(dbPath)
 
 db.pragma('journal_mode = WAL')

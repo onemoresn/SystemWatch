@@ -1,0 +1,38 @@
+{
+  "name": "sitecommand-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SiteCommand desktop app for Windows",
+  "main": "main.js",
+  "author": "N-FINIT DEVELOPMENT",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win --x64"
+  },
+  "devDependencies": {
+    "electron": "35.0.1",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.nfinit.sitecommand",
+    "productName": "SiteCommand",
+    "directories": {
+      "output": "../release",
+      "buildResources": "assets"
+    },
+    "files": ["main.js"],
+    "extraResources": [
+      { "from": "../dist-bundle/sitecommand", "to": "sitecommand" },
+      { "from": "runtime/node.exe", "to": "node/node.exe" }
+    ],
+    "win": {
+      "target": ["nsis"],
+      "artifactName": "SiteCommand-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "SiteCommand"
+    }
+  }
+}

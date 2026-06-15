@@ -1,5 +1,6 @@
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
+import fastifyStatic from '@fastify/static'
 import fs from 'node:fs'
 import path from 'node:path'
 import { registerEventRoutes } from './routes/events.js'
@@ -27,6 +28,17 @@ async function main() {
   })
 
   app.get('/health', async () => ({ ok: true, service: 'sitecommand-api' }))
+
+  const webDist = resolveProjectPath('web', 'dist')
+  if (fs.existsSync(webDist)) {
+    await app.register(fastifyStatic, { root: webDist, wildcard: false })
+    app.setNotFoundHandler((req, reply) => {
+      if (req.url.startsWith('/v1') || req.url.startsWith('/beacon')) {
+        return reply.code(404).send({ error: 'not found' })
+      }
+      return reply.sendFile('index.html')
+    })
+  }
 
   await app.listen({ port: PORT, host: HOST })
   console.log(`SiteCommand API listening on http://${HOST}:${PORT}`)

@@ -1,10 +1,14 @@
 {
   "name": "sitecommand",
   "private": true,
-  "workspaces": ["api", "web"],
+  "workspaces": ["api", "web", "desktop"],
   "scripts": {
     "dev": "concurrently -n api,web -c blue,green \"npm run dev -w api\" \"npm run dev -w web\"",
     "build": "npm run build -w api && npm run build -w web",
+    "build:desktop": "npm run build -w api && npm run build -w web -- --mode desktop",
+    "bundle:desktop": "powershell -ExecutionPolicy Bypass -File scripts/prepare-desktop-bundle.ps1",
+    "start:desktop": "npm run bundle:desktop && npm run start -w desktop",
+    "package:win": "npm run bundle:desktop && npm install -w desktop && npm run dist -w desktop",
     "start": "npm run start -w api",
     "seed": "npm run seed -w api"
   },
