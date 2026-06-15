@@ -4,7 +4,7 @@ const fs = require('fs')
 const { spawn } = require('child_process')
 const http = require('http')
 
-const PORT = 3847
+const PORT = 39547
 let apiProcess = null
 let mainWindow = null
 
@@ -22,33 +22,52 @@ function nodeExecutable() {
   return 'node'
 }
 
-function waitForHealth(timeoutMs = 60000) {
-  const start = Date.now()
+function httpGet(url, timeoutMs = 5000) {
   return new Promise((resolve, reject) => {
-    const tick = () => {
-      http
-        .get(`http://127.0.0.1:${PORT}/health`, (res) => {
-          if (res.statusCode === 200) resolve()
-          else retry()
-        })
-        .on('error', retry)
-    }
-    const retry = () => {
-      if (Date.now() - start > timeoutMs) reject(new Error('API failed to start'))
-      else setTimeout(tick, 400)
-    }
-    tick()
+    const req = http.get(url, (res) => {
+      let body = ''
+      res.on('data', (chunk) => { body += chunk })
+      res.on('end', () => resolve({ status: res.statusCode ?? 0, body }))
+    })
+    req.on('error', reject)
+    req.setTimeout(timeoutMs, () => {
+      req.destroy()
+      reject(new Error(`Timeout loading ${url}`))
+    })
   })
+}
+
+async function waitForReady(timeoutMs = 90000) {
+  const start = Date.now()
+  while (Date.now() - start < timeoutMs) {
+    try {
+      const health = await httpGet(`http://127.0.0.1:${PORT}/health`)
+      if (health.status !== 200) throw new Error('health not ok')
+
+      const page = await httpGet(`http://127.0.0.1:${PORT}/`)
+      if (page.status !== 200 || !page.body.includes('id="root"')) {
+        throw new Error('dashboard HTML missing')
+      }
+      return
+    } catch {
+      await new Promise((r) => setTimeout(r, 500))
+    }
+  }
+  throw new Error('SiteCommand failed to start. Try reinstalling or restart your PC.')
 }
 
 function startApi() {
   const root = resourcesRoot()
   const apiEntry = path.join(root, 'api', 'dist', 'index.js')
+  const webDist = path.join(root, 'web', 'dist')
   const node = nodeExecutable()
   const userData = app.getPath('userData')
 
   if (!fs.existsSync(apiEntry)) {
     throw new Error(`API not found at ${apiEntry}`)
+  }
+  if (!fs.existsSync(path.join(webDist, 'index.html'))) {
+    throw new Error(`Dashboard not found at ${webDist}`)
   }
 
   apiProcess = spawn(node, [apiEntry], {
@@ -65,13 +84,22 @@ function startApi() {
     windowsHide: true,
   })
 
+  apiProcess.on('exit', (code, signal) => {
+    if (code !== 0 && code !== null) {
+      console.error('[api] exited', code, signal)
+      if (mainWindow) {
+        dialog.showErrorBox('SiteCommand', `Background service stopped (code ${code}).`)
+      }
+    }
+  })
+
   apiProcess.stdout?.on('data', (d) => console.log('[api]', d.toString().trim()))
   apiProcess.stderr?.on('data', (d) => console.error('[api]', d.toString().trim()))
   apiProcess.on('error', (err) => {
     console.error('Failed to spawn API:', err)
     dialog.showErrorBox(
       'SiteCommand',
-      'Could not start the local API. Install Node.js 20+ or reinstall SiteCommand.',
+      'Could not start the local service. Reinstall SiteCommand or install Node.js 20+.',
     )
   })
 }
@@ -84,15 +112,24 @@ function createWindow() {
     minHeight: 600,
     title: 'SiteCommand',
     autoHideMenuBar: true,
+    backgroundColor: '#f5f7fa',
     webPreferences: { contextIsolation: true },
   })
+
+  mainWindow.webContents.on('did-fail-load', (_event, code, description, url) => {
+    dialog.showErrorBox(
+      'SiteCommand',
+      `Failed to load dashboard (${code}): ${description}\n${url}`,
+    )
+  })
+
   mainWindow.loadURL(`http://127.0.0.1:${PORT}/`)
 }
 
 app.whenReady().then(async () => {
   try {
     startApi()
-    await waitForHealth()
+    await waitForReady()
     createWindow()
   } catch (err) {
     dialog.showErrorBox('SiteCommand', String(err?.message ?? err))
