@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { fetchOverview, runHealthCheck, type Overview, SiteStatus } from './api'
+import { fetchOverview, runHealthCheck, API_BASE, type Overview, SiteStatus } from './api'
 
 function StatusDot({ status }: { status: string }) {
   const color = status === 'online' ? 'var(--green)' : 'var(--red)'
@@ -203,7 +203,9 @@ export default function App() {
           <div style={{ fontWeight: 800, fontSize: '1.25rem' }}>
             Site<span style={{ color: '#93c5fd' }}>Command</span>
           </div>
-          <div style={{ fontSize: '0.8rem', opacity: 0.75 }}>Website command center</div>
+          <div style={{ fontSize: '0.8rem', opacity: 0.75 }}>
+            Website command center · {API_BASE.replace(/^https?:\/\//, '')}
+          </div>
         </div>
         <button
           type="button"

@@ -28,16 +28,18 @@ export interface Overview {
   }
 }
 
-const API = import.meta.env.VITE_API_URL ?? ''
+const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3001'
 
 export async function fetchOverview(): Promise<Overview> {
-  const res = await fetch(`${API}/v1/dashboard/overview`)
+  const res = await fetch(`${API_BASE}/v1/dashboard/overview`)
   if (!res.ok) throw new Error('Failed to load dashboard')
   return res.json()
 }
 
+export { API_BASE }
+
 export async function runHealthCheck(id: string) {
-  const res = await fetch(`${API}/v1/websites/${id}/health-check`, { method: 'POST' })
+  const res = await fetch(`${API_BASE}/v1/websites/${id}/health-check`, { method: 'POST' })
   if (!res.ok) throw new Error('Health check failed')
   return res.json()
 }
